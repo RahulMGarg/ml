@@ -1,17 +1,26 @@
+import time
 import theano
 import theano.tensor as T
 import cPickle as pickle
 import numpy as np
 
-def load_if_saved(x):
-    return x
-
+def cached_function(name, *args, **kwargs):
+    filename = '%s.pkl' % name
+    try:
+        fn = pickle.load(open(filename))
+    except (OSError, IOError) as e:
+        fn = theano.function(*args, **kwargs)
+        pickle.dump(fn, open(filename, 'w'))
+        fn.filename = name
+    return fn
 x = T.matrix()
 y = T.scalar()
 
 out = y * x
 
-t_fn = theano.function([x, y], out)
+t = time.time()
+t_fn = cached_function('t_fn', [x, y], out)
+print time.time() - t
 X = np.array([[1, 2], [3, 4]])
 c = 2.0
 print t_fn(X, c)
